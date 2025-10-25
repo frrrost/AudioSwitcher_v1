@@ -14,6 +14,8 @@ namespace FortyOne.AudioSwitcher
         {
             InitializeComponent();
             txtLog.Text = text;
+
+            
         }
 
         private void ChangeLogForm_Load(object sender, EventArgs e)
