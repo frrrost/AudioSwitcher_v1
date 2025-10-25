@@ -83,11 +83,13 @@
   <PropertyGroup />
   <ItemGroup>
     <Reference Include="AudioSwitcher.AudioApi">
+      <HintPath>..\packages\audioswitcher.audioapi.coreaudio\4.0.0-alpha5\SomeLibrary.dll</HintPath>
     </Reference>
     <Reference Include="AudioSwitcher.AudioApi.CoreAudio">
+      <HintPath>..\packages\audioswitcher.audioapi\4.0.0-alpha5\AudioSwitcher.AudioApi.CoreAudio.dll</HintPath>
     </Reference>
     <Reference Include="fastjson">
-     </Reference>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
@@ -99,7 +101,6 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="WindowsInput">
-
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -198,6 +199,7 @@
     <Content Include="Icons\c.png" />
     <Content Include="Icons\e.png" />
     <Content Include="Icons\f.png" />
+    <Content Include="packages\dummy.txt" />
     <Content Include="Resources\shortcut.png" />
     <None Include="Icons\github.png" />
     <None Include="Icons\twitter.png" />
@@ -278,9 +280,4 @@
     <PreBuildEvent>
     </PreBuildEvent>
   </PropertyGroup>
-
 </Project>
-
-
-
-
