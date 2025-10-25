@@ -83,11 +83,11 @@
   <PropertyGroup />
   <ItemGroup>
     <Reference Include="AudioSwitcher.AudioApi, Version=4.0.0.308, Culture=neutral, PublicKeyToken=fda5729e2db3a64f, processorArchitecture=MSIL">
-      <HintPath>..\Resources\AudioSwitcher.AudioApi.dll</HintPath>
+      <HintPath>..\packaging\AudioSwitcher.AudioApi.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="AudioSwitcher.AudioApi.CoreAudio, Version=4.0.0.308, Culture=neutral, PublicKeyToken=fda5729e2db3a64f, processorArchitecture=MSIL">
-      <HintPath>..\Resources\AudioSwitcher.AudioApi.CoreAudio.dll</HintPath>
+      <HintPath>..\packaging\AudioSwitcher.AudioApi.CoreAudio.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="fastjson, Version=2.1.0.0, Culture=neutral, PublicKeyToken=6b75a806b86095cd, processorArchitecture=MSIL">
@@ -284,5 +284,6 @@
   </PropertyGroup>
 
 </Project>
+
 
 
