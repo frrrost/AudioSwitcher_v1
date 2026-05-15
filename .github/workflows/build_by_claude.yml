@@ -26,11 +26,20 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore FortyOne.AudioSwitcher.sln
 
-      # ── 4. Setup MSBuild ──────────────────────────────────────────────────────
+      # ── 4. Install missing .NET targeting packs ───────────────────────────────
+      # The AutoUpdater sub-project targets .NETFramework v4.0 Client Profile,
+      # which is not pre-installed on windows-latest.  We install the reference
+      # assemblies via Chocolatey so MSBuild can resolve them.
+      # (The main GUI project targets 4.5.2, which IS available by default.)
+      - name: Install .NET 4.0 targeting pack
+        run: choco install netfx-4.0.3-devpack --no-progress -y
+        shell: powershell
+
+      # ── 5. Setup MSBuild ──────────────────────────────────────────────────────
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      # ── 5. Build ──────────────────────────────────────────────────────────────
+      # ── 6. Build ──────────────────────────────────────────────────────────────
       # Notes on the properties passed:
       #   Configuration=Release   – produces an optimised binary
       #   Platform=x86            – matches the csproj's Release|x86 profile
@@ -54,7 +63,7 @@ jobs:
             /m `
             /v:minimal
 
-      # ── 6. Upload the built EXE as an artifact ────────────────────────────────
+      # ── 7. Upload the built EXE as an artifact ────────────────────────────────
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
