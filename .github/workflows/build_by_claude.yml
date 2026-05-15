@@ -29,31 +29,30 @@ jobs:
           $v452    = "$refRoot\v4.5.2"
           $client  = "$v40\Profile\Client"
 
-          # Ensure all directories exist
-          New-Item -ItemType Directory -Force -Path $v40              | Out-Null
-          New-Item -ItemType Directory -Force -Path "$client\RedistList" | Out-Null
+          # Create ALL needed directories first
+          New-Item -ItemType Directory -Force -Path "$v40\RedistList"       | Out-Null
+          New-Item -ItemType Directory -Force -Path "$client\RedistList"    | Out-Null
 
-          # Write FrameworkList for the plain v4.0 profile
+          # FrameworkList for plain v4.0
           $xml  = '<?xml version="1.0" encoding="utf-8"?>'
           $xml += '<FileList Redist="Microsoft-.NETFramework-v4.0"'
           $xml += ' Name=".NET Framework 4"'
           $xml += ' TargetFrameworkDirectory="..\" />'
           Set-Content "$v40\RedistList\FrameworkList.xml" -Value $xml -Encoding UTF8
 
-          # Write FrameworkList for the Client Profile sub-folder
+          # FrameworkList for v4.0 Client Profile
           $xmlC  = '<?xml version="1.0" encoding="utf-8"?>'
           $xmlC += '<FileList Redist="Microsoft-.NETFramework-v4.0-Client"'
           $xmlC += ' Name=".NET Framework 4 Client Profile"'
           $xmlC += ' TargetFrameworkDirectory="..\" />'
           Set-Content "$client\RedistList\FrameworkList.xml" -Value $xmlC -Encoding UTF8
 
-          # Always copy all v4.5.2 reference DLLs into the v4.0 folder
-          # (v4.5.2 is a strict superset; compiler only reads signatures)
+          # Force-copy all v4.5.2 reference DLLs into v4.0 (superset, safe for compilation)
           Write-Host "Copying v4.5.2 reference assemblies into v4.0 folder..."
           Get-ChildItem "$v452\*.dll" | ForEach-Object {
             Copy-Item $_.FullName "$v40\$($_.Name)" -Force
           }
-          Write-Host "Done - $(Get-ChildItem $v40\*.dll | Measure-Object | Select -Expand Count) DLLs in $v40"
+          Write-Host "Done - $(Get-ChildItem "$v40\*.dll" | Measure-Object | Select-Object -Expand Count) DLLs in $v40"
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
