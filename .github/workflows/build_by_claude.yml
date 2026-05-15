@@ -19,7 +19,19 @@ jobs:
         uses: NuGet/setup-nuget@v2
 
       - name: Restore NuGet packages
-        run: nuget restore FortyOne.AudioSwitcher.sln
+        # Run from the repo root where the .sln lives so that the packages\
+        # folder is created next to the .sln — exactly where the HintPaths
+        # in the csproj files expect it (..\packages\...).
+        run: nuget restore FortyOne.AudioSwitcher.sln -PackagesDirectory packages
+        working-directory: ${{ github.workspace }}
+
+      - name: Verify packages restored
+        shell: powershell
+        run: |
+          $pkgs = Get-ChildItem packages -Directory -ErrorAction SilentlyContinue
+          if (-not $pkgs) { Write-Error "packages\ folder is empty or missing!"; exit 1 }
+          Write-Host "Restored packages:"
+          $pkgs | ForEach-Object { Write-Host "  $($_.Name)" }
 
       - name: Stub .NET 4.0 reference assemblies
         shell: powershell
@@ -29,25 +41,19 @@ jobs:
           $v452    = "$refRoot\v4.5.2"
           $client  = "$v40\Profile\Client"
 
-          # Create ALL needed directories first
-          New-Item -ItemType Directory -Force -Path "$v40\RedistList"       | Out-Null
-          New-Item -ItemType Directory -Force -Path "$client\RedistList"    | Out-Null
+          New-Item -ItemType Directory -Force -Path "$v40\RedistList"    | Out-Null
+          New-Item -ItemType Directory -Force -Path "$client\RedistList" | Out-Null
 
-          # FrameworkList for plain v4.0
           $xml  = '<?xml version="1.0" encoding="utf-8"?>'
           $xml += '<FileList Redist="Microsoft-.NETFramework-v4.0"'
-          $xml += ' Name=".NET Framework 4"'
-          $xml += ' TargetFrameworkDirectory="..\" />'
+          $xml += ' Name=".NET Framework 4" TargetFrameworkDirectory="..\" />'
           Set-Content "$v40\RedistList\FrameworkList.xml" -Value $xml -Encoding UTF8
 
-          # FrameworkList for v4.0 Client Profile
           $xmlC  = '<?xml version="1.0" encoding="utf-8"?>'
           $xmlC += '<FileList Redist="Microsoft-.NETFramework-v4.0-Client"'
-          $xmlC += ' Name=".NET Framework 4 Client Profile"'
-          $xmlC += ' TargetFrameworkDirectory="..\" />'
+          $xmlC += ' Name=".NET Framework 4 Client Profile" TargetFrameworkDirectory="..\" />'
           Set-Content "$client\RedistList\FrameworkList.xml" -Value $xmlC -Encoding UTF8
 
-          # Force-copy all v4.5.2 reference DLLs into v4.0 (superset, safe for compilation)
           Write-Host "Copying v4.5.2 reference assemblies into v4.0 folder..."
           Get-ChildItem "$v452\*.dll" | ForEach-Object {
             Copy-Item $_.FullName "$v40\$($_.Name)" -Force
