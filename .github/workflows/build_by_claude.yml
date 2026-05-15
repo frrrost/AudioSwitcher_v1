@@ -21,26 +21,39 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore FortyOne.AudioSwitcher.sln
 
-      - name: Stub .NET 4.0 Client Profile reference assemblies
+      - name: Stub .NET 4.0 reference assemblies
         shell: powershell
         run: |
           $refRoot = "${env:ProgramFiles(x86)}\Reference Assemblies\Microsoft\Framework\.NETFramework"
-          $v40    = "$refRoot\v4.0"
-          $client = "$v40\Profile\Client"
+          $v40     = "$refRoot\v4.0"
+          $v452    = "$refRoot\v4.5.2"
+          $client  = "$v40\Profile\Client"
+
+          # Ensure all directories exist
+          New-Item -ItemType Directory -Force -Path $v40              | Out-Null
           New-Item -ItemType Directory -Force -Path "$client\RedistList" | Out-Null
-          $xml = '<?xml version="1.0" encoding="utf-8"?>'
-          $xml += '<FileList Redist="Microsoft-.NETFramework-v4.0-Client"'
-          $xml += ' Name=".NET Framework 4 Client Profile"'
+
+          # Write FrameworkList for the plain v4.0 profile
+          $xml  = '<?xml version="1.0" encoding="utf-8"?>'
+          $xml += '<FileList Redist="Microsoft-.NETFramework-v4.0"'
+          $xml += ' Name=".NET Framework 4"'
           $xml += ' TargetFrameworkDirectory="..\" />'
-          Set-Content "$client\RedistList\FrameworkList.xml" -Value $xml -Encoding UTF8
-          if (-not (Test-Path "$v40\mscorlib.dll")) {
-            Write-Host "Copying v4.5.2 reference assemblies into v4.0 folder..."
-            Get-ChildItem "$refRoot\v4.5.2\*.dll" | ForEach-Object {
-              $dest = "$v40\$($_.Name)"
-              if (-not (Test-Path $dest)) { Copy-Item $_.FullName $dest }
-            }
+          Set-Content "$v40\RedistList\FrameworkList.xml" -Value $xml -Encoding UTF8
+
+          # Write FrameworkList for the Client Profile sub-folder
+          $xmlC  = '<?xml version="1.0" encoding="utf-8"?>'
+          $xmlC += '<FileList Redist="Microsoft-.NETFramework-v4.0-Client"'
+          $xmlC += ' Name=".NET Framework 4 Client Profile"'
+          $xmlC += ' TargetFrameworkDirectory="..\" />'
+          Set-Content "$client\RedistList\FrameworkList.xml" -Value $xmlC -Encoding UTF8
+
+          # Always copy all v4.5.2 reference DLLs into the v4.0 folder
+          # (v4.5.2 is a strict superset; compiler only reads signatures)
+          Write-Host "Copying v4.5.2 reference assemblies into v4.0 folder..."
+          Get-ChildItem "$v452\*.dll" | ForEach-Object {
+            Copy-Item $_.FullName "$v40\$($_.Name)" -Force
           }
-          Write-Host "Done - stub at $client"
+          Write-Host "Done - $(Get-ChildItem $v40\*.dll | Measure-Object | Select -Expand Count) DLLs in $v40"
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
