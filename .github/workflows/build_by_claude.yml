@@ -5,54 +5,46 @@ on:
     branches: [ "master", "main" ]
   pull_request:
     branches: [ "master", "main" ]
-  workflow_dispatch:          # lets you trigger it manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest   # WinForms + .NET 4.5.2 requires a Windows runner
+    runs-on: windows-latest
 
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Install NuGet CLI ──────────────────────────────────────────────────
-      # The project uses old-style packages.config, so we need nuget.exe,
-      # NOT `dotnet restore`.
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v2
 
-      # ── 3. Restore NuGet packages ─────────────────────────────────────────────
       - name: Restore NuGet packages
         run: nuget restore FortyOne.AudioSwitcher.sln
 
-      # ── 4. Install missing .NET targeting packs ───────────────────────────────
-      # The AutoUpdater sub-project targets .NETFramework v4.0 Client Profile,
-      # which is not pre-installed on windows-latest.  We install the reference
-      # assemblies via Chocolatey so MSBuild can resolve them.
-      # (The main GUI project targets 4.5.2, which IS available by default.)
-      - name: Install .NET 4.0 targeting pack
-        run: choco install netfx-4.0.3-devpack --no-progress -y
+      - name: Stub .NET 4.0 Client Profile reference assemblies
         shell: powershell
+        run: |
+          $refRoot = "${env:ProgramFiles(x86)}\Reference Assemblies\Microsoft\Framework\.NETFramework"
+          $v40    = "$refRoot\v4.0"
+          $client = "$v40\Profile\Client"
+          New-Item -ItemType Directory -Force -Path "$client\RedistList" | Out-Null
+          $xml = '<?xml version="1.0" encoding="utf-8"?>'
+          $xml += '<FileList Redist="Microsoft-.NETFramework-v4.0-Client"'
+          $xml += ' Name=".NET Framework 4 Client Profile"'
+          $xml += ' TargetFrameworkDirectory="..\" />'
+          Set-Content "$client\RedistList\FrameworkList.xml" -Value $xml -Encoding UTF8
+          if (-not (Test-Path "$v40\mscorlib.dll")) {
+            Write-Host "Copying v4.5.2 reference assemblies into v4.0 folder..."
+            Get-ChildItem "$refRoot\v4.5.2\*.dll" | ForEach-Object {
+              $dest = "$v40\$($_.Name)"
+              if (-not (Test-Path $dest)) { Copy-Item $_.FullName $dest }
+            }
+          }
+          Write-Host "Done - stub at $client"
 
-      # ── 5. Setup MSBuild ──────────────────────────────────────────────────────
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      # ── 6. Build ──────────────────────────────────────────────────────────────
-      # Notes on the properties passed:
-      #   Configuration=Release   – produces an optimised binary
-      #   Platform=x86            – matches the csproj's Release|x86 profile
-      #   SignAssembly=false      – skips strong-name signing; the repo's
-      #                            fortyone.pfx private key is not available
-      #                            in a public fork, so signing would fail.
-      #                            Remove this override if you add the PFX as a
-      #                            GitHub secret and restore it in a step above.
-      #   RunPostBuildEvent=Never – skips the libz-post.bat packaging script
-      #                            (it's an optional DLL-bundling step and
-      #                            requires libz.exe from the packages folder
-      #                            to be on PATH).  Set to OnBuildSuccess once
-      #                            you verify the basic build works.
       - name: Build solution
         run: |
           msbuild FortyOne.AudioSwitcher.sln `
@@ -63,12 +55,10 @@ jobs:
             /m `
             /v:minimal
 
-      # ── 7. Upload the built EXE as an artifact ────────────────────────────────
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: AudioSwitcher-Release-x86
-          # The csproj sets OutputPath=bin\Release\ for the Release|x86 config.
           path: FortyOne.AudioSwitcher/bin/Release/
           if-no-files-found: error
           retention-days: 30
