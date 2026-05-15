@@ -1,0 +1,65 @@
+name: Build AudioSwitcher
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  workflow_dispatch:          # lets you trigger it manually from the Actions tab
+
+jobs:
+  build:
+    runs-on: windows-latest   # WinForms + .NET 4.5.2 requires a Windows runner
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Install NuGet CLI ──────────────────────────────────────────────────
+      # The project uses old-style packages.config, so we need nuget.exe,
+      # NOT `dotnet restore`.
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      # ── 3. Restore NuGet packages ─────────────────────────────────────────────
+      - name: Restore NuGet packages
+        run: nuget restore FortyOne.AudioSwitcher.sln
+
+      # ── 4. Setup MSBuild ──────────────────────────────────────────────────────
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      # ── 5. Build ──────────────────────────────────────────────────────────────
+      # Notes on the properties passed:
+      #   Configuration=Release   – produces an optimised binary
+      #   Platform=x86            – matches the csproj's Release|x86 profile
+      #   SignAssembly=false      – skips strong-name signing; the repo's
+      #                            fortyone.pfx private key is not available
+      #                            in a public fork, so signing would fail.
+      #                            Remove this override if you add the PFX as a
+      #                            GitHub secret and restore it in a step above.
+      #   RunPostBuildEvent=Never – skips the libz-post.bat packaging script
+      #                            (it's an optional DLL-bundling step and
+      #                            requires libz.exe from the packages folder
+      #                            to be on PATH).  Set to OnBuildSuccess once
+      #                            you verify the basic build works.
+      - name: Build solution
+        run: |
+          msbuild FortyOne.AudioSwitcher.sln `
+            /p:Configuration=Release `
+            /p:Platform=x86 `
+            /p:SignAssembly=false `
+            /p:RunPostBuildEvent=Never `
+            /m `
+            /v:minimal
+
+      # ── 6. Upload the built EXE as an artifact ────────────────────────────────
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioSwitcher-Release-x86
+          # The csproj sets OutputPath=bin\Release\ for the Release|x86 config.
+          path: FortyOne.AudioSwitcher/bin/Release/
+          if-no-files-found: error
+          retention-days: 30
