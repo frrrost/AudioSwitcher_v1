@@ -22,29 +22,32 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: nuget restore FortyOne.AudioSwitcher.sln
 
-      - name: Diagnose package paths
+      - name: Copy packages into Resources folder
         shell: powershell
         working-directory: ${{ github.workspace }}
         run: |
-          Write-Host "=== Searching entire workspace for AudioSwitcher.AudioApi.dll ==="
-          Get-ChildItem -Path "D:\a" -Recurse -Filter "AudioSwitcher.AudioApi.dll" -ErrorAction SilentlyContinue |
-            ForEach-Object { Write-Host $_.FullName }
-
-          Write-Host ""
-          Write-Host "=== packages\ folder contents (if exists) ==="
-          if (Test-Path "packages") {
-            Get-ChildItem packages -Directory | ForEach-Object { Write-Host "  $($_.Name)" }
-          } else {
-            Write-Host "  [packages\ does not exist at repo root]"
+          # The GUI csproj has a Resources\ folder with DLLs checked in,
+          # and HintPaths pointing to ..\packages\...\net45\.
+          # Overwrite the Resources copies with the freshly-restored packages
+          # so both resolution paths point to the same binaries.
+          $res = "FortyOne.AudioSwitcher\Resources"
+          $map = @{
+            "packages\AudioSwitcher.AudioApi.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.dll"               = "$res\AudioSwitcher.AudioApi.dll"
+            "packages\AudioSwitcher.AudioApi.CoreAudio.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.CoreAudio.dll" = "$res\AudioSwitcher.AudioApi.CoreAudio.dll"
+            "packages\fastJSON.2.1.21\lib\net40\fastjson.dll"                                                  = "$res\fastjson.dll"
+            "packages\WindowsInput.0.2.0.0\lib\net40\WindowsInput.dll"                                        = "$res\WindowsInput.dll"
           }
-
-          Write-Host ""
-          Write-Host "=== nuget.config files in workspace ==="
-          Get-ChildItem -Path "D:\a\AudioSwitcher_v1" -Recurse -Filter "nuget.config" -ErrorAction SilentlyContinue |
-            ForEach-Object {
-              Write-Host "--- $($_.FullName) ---"
-              Get-Content $_.FullName | ForEach-Object { Write-Host $_ }
+          foreach ($src in $map.Keys) {
+            $dst = $map[$src]
+            if (Test-Path $src) {
+              Write-Host "Copy $src -> $dst"
+              Copy-Item $src $dst -Force
+            } else {
+              Write-Warning "Source not found: $src"
+              Get-ChildItem (Split-Path $src | Split-Path) -Recurse -Filter "*.dll" |
+                ForEach-Object { Write-Host "  found: $($_.FullName)" }
             }
+          }
 
       - name: Stub .NET 4.0 reference assemblies
         shell: powershell
