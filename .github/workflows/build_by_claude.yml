@@ -18,20 +18,32 @@ jobs:
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v2
 
+      # Restore without -PackagesDirectory so NuGet uses the solution-relative
+      # default (.\packages\) which matches the ..\packages\... HintPaths in
+      # the csproj files.  The working-directory must be the solution root.
       - name: Restore NuGet packages
-        # Run from the repo root where the .sln lives so that the packages\
-        # folder is created next to the .sln — exactly where the HintPaths
-        # in the csproj files expect it (..\packages\...).
-        run: nuget restore FortyOne.AudioSwitcher.sln -PackagesDirectory packages
         working-directory: ${{ github.workspace }}
+        run: nuget restore FortyOne.AudioSwitcher.sln
 
-      - name: Verify packages restored
+      - name: Verify packages location
         shell: powershell
+        working-directory: ${{ github.workspace }}
         run: |
-          $pkgs = Get-ChildItem packages -Directory -ErrorAction SilentlyContinue
-          if (-not $pkgs) { Write-Error "packages\ folder is empty or missing!"; exit 1 }
-          Write-Host "Restored packages:"
-          $pkgs | ForEach-Object { Write-Host "  $($_.Name)" }
+          if (-not (Test-Path "packages")) {
+            Write-Error "packages\ folder not found at repo root!"
+            exit 1
+          }
+          Write-Host "packages\ contents:"
+          Get-ChildItem packages -Directory | ForEach-Object { Write-Host "  $($_.Name)" }
+
+          # Spot-check the DLL the GUI project needs most
+          $dll = "packages\AudioSwitcher.AudioApi.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.dll"
+          if (Test-Path $dll) {
+            Write-Host "Key DLL found: $dll"
+          } else {
+            Write-Error "Key DLL missing: $dll"
+            exit 1
+          }
 
       - name: Stub .NET 4.0 reference assemblies
         shell: powershell
@@ -64,6 +76,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Build solution
+        working-directory: ${{ github.workspace }}
         run: |
           msbuild FortyOne.AudioSwitcher.sln `
             /p:Configuration=Release `
