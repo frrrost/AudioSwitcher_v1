@@ -22,19 +22,29 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: nuget restore FortyOne.AudioSwitcher.sln
 
-      - name: Verify packages location
+      - name: Diagnose package paths
         shell: powershell
         working-directory: ${{ github.workspace }}
         run: |
-          $dll = "packages\AudioSwitcher.AudioApi.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.dll"
-          if (Test-Path $dll) {
-            Write-Host "OK: $dll"
+          Write-Host "=== Searching entire workspace for AudioSwitcher.AudioApi.dll ==="
+          Get-ChildItem -Path "D:\a" -Recurse -Filter "AudioSwitcher.AudioApi.dll" -ErrorAction SilentlyContinue |
+            ForEach-Object { Write-Host $_.FullName }
+
+          Write-Host ""
+          Write-Host "=== packages\ folder contents (if exists) ==="
+          if (Test-Path "packages") {
+            Get-ChildItem packages -Directory | ForEach-Object { Write-Host "  $($_.Name)" }
           } else {
-            Write-Host "packages\ tree:"
-            Get-ChildItem packages -Recurse -Filter "*.dll" | Select-Object -First 30 | ForEach-Object { Write-Host "  $($_.FullName)" }
-            Write-Error "Key DLL missing - restore landed in wrong location"
-            exit 1
+            Write-Host "  [packages\ does not exist at repo root]"
           }
+
+          Write-Host ""
+          Write-Host "=== nuget.config files in workspace ==="
+          Get-ChildItem -Path "D:\a\AudioSwitcher_v1" -Recurse -Filter "nuget.config" -ErrorAction SilentlyContinue |
+            ForEach-Object {
+              Write-Host "--- $($_.FullName) ---"
+              Get-Content $_.FullName | ForEach-Object { Write-Host $_ }
+            }
 
       - name: Stub .NET 4.0 reference assemblies
         shell: powershell
@@ -57,7 +67,6 @@ jobs:
           $xmlC += ' Name=".NET Framework 4 Client Profile" TargetFrameworkDirectory="..\" />'
           Set-Content "$client\RedistList\FrameworkList.xml" -Value $xmlC -Encoding UTF8
 
-          Write-Host "Copying v4.5.2 reference assemblies into v4.0 folder..."
           Get-ChildItem "$v452\*.dll" | ForEach-Object {
             Copy-Item $_.FullName "$v40\$($_.Name)" -Force
           }
