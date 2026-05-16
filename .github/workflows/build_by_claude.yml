@@ -18,9 +18,6 @@ jobs:
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v2
 
-      # Restore without -PackagesDirectory so NuGet uses the solution-relative
-      # default (.\packages\) which matches the ..\packages\... HintPaths in
-      # the csproj files.  The working-directory must be the solution root.
       - name: Restore NuGet packages
         working-directory: ${{ github.workspace }}
         run: nuget restore FortyOne.AudioSwitcher.sln
@@ -29,19 +26,13 @@ jobs:
         shell: powershell
         working-directory: ${{ github.workspace }}
         run: |
-          if (-not (Test-Path "packages")) {
-            Write-Error "packages\ folder not found at repo root!"
-            exit 1
-          }
-          Write-Host "packages\ contents:"
-          Get-ChildItem packages -Directory | ForEach-Object { Write-Host "  $($_.Name)" }
-
-          # Spot-check the DLL the GUI project needs most
           $dll = "packages\AudioSwitcher.AudioApi.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.dll"
           if (Test-Path $dll) {
-            Write-Host "Key DLL found: $dll"
+            Write-Host "OK: $dll"
           } else {
-            Write-Error "Key DLL missing: $dll"
+            Write-Host "packages\ tree:"
+            Get-ChildItem packages -Recurse -Filter "*.dll" | Select-Object -First 30 | ForEach-Object { Write-Host "  $($_.FullName)" }
+            Write-Error "Key DLL missing - restore landed in wrong location"
             exit 1
           }
 
