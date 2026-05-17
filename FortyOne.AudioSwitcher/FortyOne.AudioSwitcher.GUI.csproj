@@ -92,7 +92,7 @@
     <HintPath>..\packages\fastJSON.2.1.21\lib\net40\fastjson.dll</HintPath>
   </Reference>
   <Reference Include="WindowsInput">
-    <HintPath>..\packages\WindowsInput.0.2.0.0\lib\WindowsInput.dll</HintPath>
+    <HintPath>..\packages\WindowsInput.0.2.0.0\lib\net20\WindowsInput.dll</HintPath>
   </Reference>
   <Reference Include="System" />
   <Reference Include="System.ComponentModel.Composition" />
