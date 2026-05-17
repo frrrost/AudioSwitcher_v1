@@ -2,11 +2,21 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
+using System.Windows.Forms;
+using FortyOne.AudioSwitcher.HotKeyData;
+
 
 namespace FortyOne.AudioSwitcher.Configuration
 {
     public class ConfigurationSettings
     {
+        
+        
+        public const string SETTING_NEXTDEVICE_KEY = "NextDeviceKey";
+        public const string SETTING_NEXTDEVICE_MODIFIERS = "NextDeviceModifiers";
+        public const string SETTING_PREVDEVICE_KEY = "PrevDeviceKey";
+        public const string SETTING_PREVDEVICE_MODIFIERS = "PrevDeviceModifiers";
+        
         public const string GUID_REGEX = @"([a-z0-9]{8}[-][a-z0-9]{4}[-][a-z0-9]{4}[-][a-z0-9]{4}[-][a-z0-9]{12})";
         public const string SETTING_CLOSETOTRAY = "CloseToTray";
         public const string SETTING_AUTOSTARTWITHWINDOWS = "AutoStartWithWindows";
@@ -230,6 +240,47 @@ namespace FortyOne.AudioSwitcher.Configuration
             set { _configWriter.Set(SETTING_ENABLEQUICKSWITCH, value.ToString()); }
         }
 
+        public Keys NextDeviceKey
+        {
+            get
+            {
+                var val = _configWriter.Get(SETTING_NEXTDEVICE_KEY);
+                return string.IsNullOrEmpty(val) ? Keys.None : (Keys)Enum.Parse(typeof(Keys), val);
+            }
+            set { _configWriter.Set(SETTING_NEXTDEVICE_KEY, value.ToString()); }
+        }
+
+        public Modifiers NextDeviceModifiers
+        {
+            get
+            {
+                var val = _configWriter.Get(SETTING_NEXTDEVICE_MODIFIERS);
+                return string.IsNullOrEmpty(val) ? Modifiers.None : (Modifiers)Enum.Parse(typeof(Modifiers), val);
+            }
+            set { _configWriter.Set(SETTING_NEXTDEVICE_MODIFIERS, value.ToString()); }
+        }
+
+        public Keys PrevDeviceKey
+        {
+            get
+            {
+                var val = _configWriter.Get(SETTING_PREVDEVICE_KEY);
+                return string.IsNullOrEmpty(val) ? Keys.None : (Keys)Enum.Parse(typeof(Keys), val);
+            }
+            set { _configWriter.Set(SETTING_PREVDEVICE_KEY, value.ToString()); }
+        }
+
+        public Modifiers PrevDeviceModifiers
+        {
+            get
+            {
+                var val = _configWriter.Get(SETTING_PREVDEVICE_MODIFIERS);
+                return string.IsNullOrEmpty(val) ? Modifiers.None : (Modifiers)Enum.Parse(typeof(Modifiers), val);
+            }
+            set { _configWriter.Set(SETTING_PREVDEVICE_MODIFIERS, value.ToString()); }
+        }
+        
+        
         public bool UpdateNotificationsEnabled
         {
             get
@@ -300,6 +351,17 @@ namespace FortyOne.AudioSwitcher.Configuration
 
             if (!SettingExists(SETTING_UPDATE_NOTIFICATIONS_ENABLED))
                 UpdateNotificationsEnabled = PollForUpdates > 0;
+            
+            if (!SettingExists(SETTING_NEXTDEVICE_KEY))
+                NextDeviceKey = Keys.None;
+            if (!SettingExists(SETTING_NEXTDEVICE_MODIFIERS))
+                NextDeviceModifiers = Modifiers.None;
+            if (!SettingExists(SETTING_PREVDEVICE_KEY))
+                PrevDeviceKey = Keys.None;
+            if (!SettingExists(SETTING_PREVDEVICE_MODIFIERS))
+                PrevDeviceModifiers = Modifiers.None;
+            
+            
         }
 
         public void LoadFrom(ConfigurationSettings otherSettings)
@@ -321,6 +383,11 @@ namespace FortyOne.AudioSwitcher.Configuration
             StartupRecordingDeviceID = otherSettings.StartupRecordingDeviceID;
             WindowHeight = otherSettings.WindowHeight;
             WindowWidth = otherSettings.WindowWidth;
+            
+            NextDeviceKey = otherSettings.NextDeviceKey;
+            NextDeviceModifiers = otherSettings.NextDeviceModifiers;
+            PrevDeviceKey = otherSettings.PrevDeviceKey;
+            PrevDeviceModifiers = otherSettings.PrevDeviceModifiers;
         }
 
         public bool SettingExists(string name)

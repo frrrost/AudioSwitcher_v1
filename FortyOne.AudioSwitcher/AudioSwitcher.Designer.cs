@@ -579,6 +579,10 @@
 			this.tapHotkeys.Controls.Add(this.dataGridView1);
 			this.tapHotkeys.Controls.Add(this.btnEditHotKey);
 			this.tapHotkeys.Controls.Add(this.btnAddHotKey);
+			this.tapHotkeys.Controls.Add(this.lblNextDeviceHotKey);
+			this.tapHotkeys.Controls.Add(this.btnNextDeviceHotKey);
+			this.tapHotkeys.Controls.Add(this.lblPrevDeviceHotKey);
+			this.tapHotkeys.Controls.Add(this.btnPrevDeviceHotKey);
 			this.tapHotkeys.Location = new System.Drawing.Point(4, 22);
 			this.tapHotkeys.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
 			this.tapHotkeys.Name = "tapHotkeys";
@@ -645,7 +649,7 @@
 			this.dataGridView1.ShowCellToolTips = false;
 			this.dataGridView1.ShowEditingIcon = false;
 			this.dataGridView1.ShowRowErrors = false;
-			this.dataGridView1.Size = new System.Drawing.Size(255, 269);
+			this.dataGridView1.Size = new System.Drawing.Size(255, 213);
 			this.dataGridView1.TabIndex = 0;
 			// 
 			// deviceNameDataGridViewTextBoxColumn
@@ -696,6 +700,55 @@
 			this.toolTip1.SetToolTip(this.btnAddHotKey, "Add a hotkey");
 			this.btnAddHotKey.UseVisualStyleBackColor = true;
 			this.btnAddHotKey.Click += new System.EventHandler(this.btnAddHotKey_Click);
+			
+			// 
+			// lblNextDeviceHotKey
+			// 
+			this.lblNextDeviceHotKey.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.lblNextDeviceHotKey.AutoSize = true;
+			this.lblNextDeviceHotKey.Location = new System.Drawing.Point(4, 225);
+			this.lblNextDeviceHotKey.Name = "lblNextDeviceHotKey";
+			this.lblNextDeviceHotKey.Size = new System.Drawing.Size(90, 13);
+			this.lblNextDeviceHotKey.Text = "Next device key:";
+			// 
+			// btnNextDeviceHotKey
+			// 
+			this.btnNextDeviceHotKey.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnNextDeviceHotKey.Location = new System.Drawing.Point(160, 221);
+			this.btnNextDeviceHotKey.Name = "btnNextDeviceHotKey";
+			this.btnNextDeviceHotKey.Size = new System.Drawing.Size(99, 23);
+			this.btnNextDeviceHotKey.TabIndex = 5;
+			this.btnNextDeviceHotKey.Text = "None";
+			this.toolTip1.SetToolTip(this.btnNextDeviceHotKey, "Click to set hotkey for switching to next audio device");
+			this.btnNextDeviceHotKey.UseVisualStyleBackColor = true;
+			this.btnNextDeviceHotKey.Click += new System.EventHandler(this.btnNextDeviceHotKey_Click);
+			// 
+			// lblPrevDeviceHotKey
+			// 
+			this.lblPrevDeviceHotKey.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.lblPrevDeviceHotKey.AutoSize = true;
+			this.lblPrevDeviceHotKey.Location = new System.Drawing.Point(4, 252);
+			this.lblPrevDeviceHotKey.Name = "lblPrevDeviceHotKey";
+			this.lblPrevDeviceHotKey.Size = new System.Drawing.Size(87, 13);
+			this.lblPrevDeviceHotKey.Text = "Prev device key:";
+			// 
+			// btnPrevDeviceHotKey
+			// 
+			this.btnPrevDeviceHotKey.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnPrevDeviceHotKey.Location = new System.Drawing.Point(160, 248);
+			this.btnPrevDeviceHotKey.Name = "btnPrevDeviceHotKey";
+			this.btnPrevDeviceHotKey.Size = new System.Drawing.Size(99, 23);
+			this.btnPrevDeviceHotKey.TabIndex = 6;
+			this.btnPrevDeviceHotKey.Text = "None";
+			this.toolTip1.SetToolTip(this.btnPrevDeviceHotKey, "Click to set hotkey for switching to previous audio device");
+			this.btnPrevDeviceHotKey.UseVisualStyleBackColor = true;
+			this.btnPrevDeviceHotKey.Click += new System.EventHandler(this.btnPrevDeviceHotKey_Click);
+
+			
+			
+			
+			
+			
 			// 
 			// tapAbout
 			// 
@@ -1131,6 +1184,12 @@
         private System.Windows.Forms.PictureBox openControlPanelPlayback;
         private System.Windows.Forms.PictureBox openControlPanelRecording;
 		private System.Windows.Forms.CheckBox chkShowUnknownDevicesInHotkeyList;
+		
+		
+		private System.Windows.Forms.Label lblNextDeviceHotKey;
+		private System.Windows.Forms.Label lblPrevDeviceHotKey;
+		private System.Windows.Forms.Button btnNextDeviceHotKey;
+		private System.Windows.Forms.Button btnPrevDeviceHotKey;
 	}
 }
 

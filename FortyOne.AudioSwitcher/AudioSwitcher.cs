@@ -739,10 +739,50 @@ namespace FortyOne.AudioSwitcher
             if (result == DialogResult.OK)
             {
                 HotKeyManager.ClearAll();
+                
+                // Also clear the cycle hotkey settings so they don't come back on restart
+                Program.Settings.NextDeviceKey = Keys.None;
+                Program.Settings.NextDeviceModifiers = Modifiers.None;
+                Program.Settings.PrevDeviceKey = Keys.None;
+                Program.Settings.PrevDeviceModifiers = Modifiers.None;
+                
                 RefreshGrid();
             }
         }
 
+        private void btnNextDeviceHotKey_Click(object sender, EventArgs e)
+        {
+            var hk = new HotKey
+            {
+                Action = HotKeyAction.NextPlaybackDevice,
+                Modifiers = Program.Settings.NextDeviceModifiers,
+                Key = Program.Settings.NextDeviceKey
+            };
+            var hkf = new HotKeyForm(hk);
+            hkf.ShowDialog(this);
+            Program.Settings.NextDeviceKey = hk.Key;
+            Program.Settings.NextDeviceModifiers = hk.Modifiers;
+            btnNextDeviceHotKey.Text = hk.Key == Keys.None ? "None" : hk.HotKeyString;
+            RegisterCycleHotKeys();
+        }
+
+        private void btnPrevDeviceHotKey_Click(object sender, EventArgs e)
+        {
+            var hk = new HotKey
+            {
+                Action = HotKeyAction.PreviousPlaybackDevice,
+                Modifiers = Program.Settings.PrevDeviceModifiers,
+                Key = Program.Settings.PrevDeviceKey
+            };
+            var hkf = new HotKeyForm(hk);
+            hkf.ShowDialog(this);
+            Program.Settings.PrevDeviceKey = hk.Key;
+            Program.Settings.PrevDeviceModifiers = hk.Modifiers;
+            btnPrevDeviceHotKey.Text = hk.Key == Keys.None ? "None" : hk.HotKeyString;
+            RegisterCycleHotKeys();
+        }
+        
+        
         private void RefreshGrid()
         {
             if (InvokeRequired)
@@ -799,6 +839,17 @@ namespace FortyOne.AudioSwitcher
 
             if (Program.Settings.ShowDisconnectedDevices)
                 _deviceStateFilter |= DeviceState.Unplugged;
+            
+            // show currently saved cycle hotkeys on the buttons
+            btnNextDeviceHotKey.Text = Program.Settings.NextDeviceKey == Keys.None
+                ? "None"
+                : new HotKey { Key = Program.Settings.NextDeviceKey, Modifiers = Program.Settings.NextDeviceModifiers }.HotKeyString;
+            btnPrevDeviceHotKey.Text = Program.Settings.PrevDeviceKey == Keys.None
+                ? "None"
+                : new HotKey { Key = Program.Settings.PrevDeviceKey, Modifiers = Program.Settings.PrevDeviceModifiers }.HotKeyString;
+
+            
+            RegisterCycleHotKeys();
         }
 
         //Subscribe to favourite devices changing to save it to the configuration file instantly
@@ -1284,21 +1335,100 @@ namespace FortyOne.AudioSwitcher
 
         private async void HotKeyManager_HotKeyPressed(object sender, EventArgs e)
         {
-            //Double check here before handling
             if (DisableHotKeyFunction || Program.Settings.DisableHotKeys)
                 return;
 
-            if (sender is HotKey)
+            if (!(sender is HotKey hk))
+                return;
+
+            if (hk.Action == HotKeyAction.NextPlaybackDevice)
             {
-                var hk = sender as HotKey;
+                await CyclePlaybackDevice(forward: true);
+                return;
+            }
 
-                if (hk.Device == null || hk.Device.IsDefaultDevice)
-                    return;
+            if (hk.Action == HotKeyAction.PreviousPlaybackDevice)
+            {
+                await CyclePlaybackDevice(forward: false);
+                return;
+            }
 
-                await hk.Device.SetAsDefaultAsync();
+            // original behaviour: switch to specific device
+            if (hk.Device == null || hk.Device.IsDefaultDevice)
+                return;
 
-                if (Program.Settings.DualSwitchMode)
-                    await hk.Device.SetAsDefaultCommunicationsAsync();
+            await hk.Device.SetAsDefaultAsync();
+            if (Program.Settings.DualSwitchMode)
+                await hk.Device.SetAsDefaultCommunicationsAsync();
+        }
+        
+        
+        private async Task CyclePlaybackDevice(bool forward)
+        {
+            var currentDefault = AudioDeviceManager.Controller.DefaultPlaybackDevice;
+            var playbackDevices = (await AudioDeviceManager.Controller.GetPlaybackDevicesAsync(DeviceState.Active))
+                .OrderBy(x => x.Name)
+                .ToList();
+
+            if (playbackDevices.Count < 2)
+                return;
+
+            var deviceIndex = playbackDevices.IndexOf(currentDefault);
+            if (deviceIndex < 0) deviceIndex = 0;
+
+            var step = forward ? 1 : -1;
+            var newIndex = deviceIndex;
+
+            while (true)
+            {
+                newIndex = ((newIndex + step) % playbackDevices.Count + playbackDevices.Count) % playbackDevices.Count;
+                if (newIndex == deviceIndex)
+                    break;
+                try
+                {
+                    var newDevice = playbackDevices[newIndex];
+                    if (await newDevice.SetAsDefaultAsync())
+                    {
+                        if (Program.Settings.DualSwitchMode)
+                            await newDevice.SetAsDefaultCommunicationsAsync();
+                        break;
+                    }
+                }
+                catch { /* ignored */ }
+            }
+        }
+        
+        
+        private void RegisterCycleHotKeys()
+        {
+            // unregister any existing cycle hotkeys first
+            var existing = HotKeyManager.HotKeys
+                .Where(x => x.Action == HotKeyAction.NextPlaybackDevice
+                            || x.Action == HotKeyAction.PreviousPlaybackDevice)
+                .ToList();
+            foreach (var hk in existing)
+                HotKeyManager.DeleteHotKey(hk);
+
+            if (Program.Settings.NextDeviceKey != Keys.None)
+            {
+                var hk = new HotKey
+                {
+                    Action = HotKeyAction.NextPlaybackDevice,
+                    Modifiers = Program.Settings.NextDeviceModifiers,
+                    Key = Program.Settings.NextDeviceKey
+                };
+                HotKeyManager.AddHotKey(hk);
+            }
+
+            if (Program.Settings.PrevDeviceKey != Keys.None)
+            {
+                var hk = new HotKey
+                {
+                    Action = HotKeyAction.PreviousPlaybackDevice,
+                    Modifiers = Program.Settings.PrevDeviceModifiers,
+                    Key = Program.Settings.PrevDeviceKey
+                };
+                HotKeyManager.AddHotKey(hk);
             }
         }
 

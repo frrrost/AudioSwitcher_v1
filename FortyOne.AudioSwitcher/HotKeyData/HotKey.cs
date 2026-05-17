@@ -9,6 +9,15 @@ using AudioSwitcher.AudioApi;
 
 namespace FortyOne.AudioSwitcher.HotKeyData
 {
+    
+    
+    public enum HotKeyAction
+    {
+        SwitchToDevice = 0,
+        NextPlaybackDevice = 1,
+        PreviousPlaybackDevice = 2
+    }
+    
     public class HotKey : IDisposable
     {
         /// <summary>
@@ -34,7 +43,9 @@ namespace FortyOne.AudioSwitcher.HotKeyData
         ///     The deviceID the hot key is used for
         /// </summary>
         public Guid DeviceId { get; set; }
-
+        
+        public HotKeyAction Action { get; set; }
+        
         public IDevice Device
         {
             get { return AudioDeviceManager.Controller.GetDevice(DeviceId); }
