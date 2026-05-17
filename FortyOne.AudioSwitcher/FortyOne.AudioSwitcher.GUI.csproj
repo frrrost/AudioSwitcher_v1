@@ -82,27 +82,29 @@
   <PropertyGroup />
   <PropertyGroup />
   <ItemGroup>
-    <Reference Include="AudioSwitcher.AudioApi">
-      <HintPath>..\packages\audioswitcher.audioapi.coreaudio\4.0.0-alpha5\SomeLibrary.dll</HintPath>
-    </Reference>
-    <Reference Include="AudioSwitcher.AudioApi.CoreAudio">
-      <HintPath>..\packages\audioswitcher.audioapi\4.0.0-alpha5\AudioSwitcher.AudioApi.CoreAudio.dll</HintPath>
-    </Reference>
-    <Reference Include="fastjson">
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.EnterpriseServices" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Web.Services" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
-    <Reference Include="WindowsInput">
-    </Reference>
-  </ItemGroup>
+  <Reference Include="AudioSwitcher.AudioApi">
+    <HintPath>..\packages\AudioSwitcher.AudioApi.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.dll</HintPath>
+  </Reference>
+  <Reference Include="AudioSwitcher.AudioApi.CoreAudio">
+    <HintPath>..\packages\AudioSwitcher.AudioApi.CoreAudio.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.CoreAudio.dll</HintPath>
+  </Reference>
+  <Reference Include="fastjson">
+    <HintPath>..\packages\fastJSON.2.1.21\lib\net40\fastjson.dll</HintPath>
+  </Reference>
+  <Reference Include="WindowsInput">
+    <HintPath>..\packages\WindowsInput.0.2.0.0\lib\net40\WindowsInput.dll</HintPath>
+  </Reference>
+  <Reference Include="System" />
+  <Reference Include="System.ComponentModel.Composition" />
+  <Reference Include="System.Core" />
+  <Reference Include="System.Data" />
+  <Reference Include="System.EnterpriseServices" />
+  <Reference Include="System.Runtime.Serialization" />
+  <Reference Include="System.Web.Services" />
+  <Reference Include="System.Drawing" />
+  <Reference Include="System.Windows.Forms" />
+  <Reference Include="System.Xml" />
+</ItemGroup>
   <ItemGroup>
     <Compile Include="AudioDeviceManager.cs" />
     <Compile Include="ChangeLogForm.cs">
