@@ -22,33 +22,6 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: nuget restore FortyOne.AudioSwitcher.sln
 
-      - name: Copy packages into Resources folder
-        shell: powershell
-        working-directory: ${{ github.workspace }}
-        run: |
-          # The GUI csproj has a Resources\ folder with DLLs checked in,
-          # and HintPaths pointing to ..\packages\...\net45\.
-          # Overwrite the Resources copies with the freshly-restored packages
-          # so both resolution paths point to the same binaries.
-          $res = "FortyOne.AudioSwitcher\Resources"
-          $map = @{
-            "packages\AudioSwitcher.AudioApi.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.dll"               = "$res\AudioSwitcher.AudioApi.dll"
-            "packages\AudioSwitcher.AudioApi.CoreAudio.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.CoreAudio.dll" = "$res\AudioSwitcher.AudioApi.CoreAudio.dll"
-            "packages\fastJSON.2.1.21\lib\net40\fastjson.dll"                                                  = "$res\fastjson.dll"
-            "packages\WindowsInput.0.2.0.0\lib\net40\WindowsInput.dll"                                        = "$res\WindowsInput.dll"
-          }
-          foreach ($src in $map.Keys) {
-            $dst = $map[$src]
-            if (Test-Path $src) {
-              Write-Host "Copy $src -> $dst"
-              Copy-Item $src $dst -Force
-            } else {
-              Write-Warning "Source not found: $src"
-              Get-ChildItem (Split-Path $src | Split-Path) -Recurse -Filter "*.dll" |
-                ForEach-Object { Write-Host "  found: $($_.FullName)" }
-            }
-          }
-
       - name: Stub .NET 4.0 reference assemblies
         shell: powershell
         run: |
@@ -73,26 +46,31 @@ jobs:
           Get-ChildItem "$v452\*.dll" | ForEach-Object {
             Copy-Item $_.FullName "$v40\$($_.Name)" -Force
           }
-          Write-Host "Done - $(Get-ChildItem "$v40\*.dll" | Measure-Object | Select-Object -Expand Count) DLLs in $v40"
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build solution
+      # Build only the GUI project at diagnostic verbosity so we can see
+      # exactly which HintPaths MSBuild tried and why they failed.
+      # This will produce a large log — we only care about lines mentioning
+      # AudioSwitcher.AudioApi or "not found" / "HintPath".
+      - name: Build GUI project (diagnostic verbosity)
         working-directory: ${{ github.workspace }}
         run: |
-          msbuild FortyOne.AudioSwitcher.sln `
+          msbuild FortyOne.AudioSwitcher\FortyOne.AudioSwitcher.GUI.csproj `
             /p:Configuration=Release `
             /p:Platform=x86 `
             /p:SignAssembly=false `
             /p:RunPostBuildEvent=Never `
-            /m `
-            /v:minimal
+            /v:diag `
+            2>&1 | Select-String -Pattern "AudioSwitcher\.AudioApi|HintPath|not found|Considered|Resolved|WindowsInput|fastjson" `
+            | ForEach-Object { $_.Line }
+        continue-on-error: true
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: AudioSwitcher-Release-x86
           path: FortyOne.AudioSwitcher/bin/Release/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
