@@ -319,6 +319,16 @@ namespace FortyOne.AudioSwitcher
 #if DEBUG
             btnTestError.Visible = true;
 #endif
+            
+            // Refresh cycle hotkey button labels now that controls are fully initialized
+            btnNextDeviceHotKey.Text = Program.Settings.NextDeviceKey == Keys.None
+                ? "None"
+                : new HotKey { Key = Program.Settings.NextDeviceKey, Modifiers = Program.Settings.NextDeviceModifiers }.HotKeyString;
+            btnPrevDeviceHotKey.Text = Program.Settings.PrevDeviceKey == Keys.None
+                ? "None"
+                : new HotKey { Key = Program.Settings.PrevDeviceKey, Modifiers = Program.Settings.PrevDeviceModifiers }.HotKeyString;
+
+            
             MinimizeFootprint();
         }
 
@@ -752,34 +762,36 @@ namespace FortyOne.AudioSwitcher
 
         private void btnNextDeviceHotKey_Click(object sender, EventArgs e)
         {
-            var hk = new HotKey
+            using (var dlg = new CycleHotKeyForm(
+                       "Next Device Hotkey",
+                       Program.Settings.NextDeviceKey,
+                       Program.Settings.NextDeviceModifiers))
             {
-                Action = HotKeyAction.NextPlaybackDevice,
-                Modifiers = Program.Settings.NextDeviceModifiers,
-                Key = Program.Settings.NextDeviceKey
-            };
-            var hkf = new HotKeyForm(hk);
-            hkf.ShowDialog(this);
-            Program.Settings.NextDeviceKey = hk.Key;
-            Program.Settings.NextDeviceModifiers = hk.Modifiers;
-            btnNextDeviceHotKey.Text = hk.Key == Keys.None ? "None" : hk.HotKeyString;
-            RegisterCycleHotKeys();
+                if (dlg.ShowDialog(this) == DialogResult.OK)
+                {
+                    Program.Settings.NextDeviceKey = dlg.SelectedKey;
+                    Program.Settings.NextDeviceModifiers = dlg.SelectedModifiers;
+                    btnNextDeviceHotKey.Text = dlg.SelectedKey == Keys.None ? "None" : new HotKey { Key = dlg.SelectedKey, Modifiers = dlg.SelectedModifiers }.HotKeyString;
+                    RegisterCycleHotKeys();
+                }
+            }
         }
 
         private void btnPrevDeviceHotKey_Click(object sender, EventArgs e)
         {
-            var hk = new HotKey
+            using (var dlg = new CycleHotKeyForm(
+                       "Prev Device Hotkey",
+                       Program.Settings.PrevDeviceKey,
+                       Program.Settings.PrevDeviceModifiers))
             {
-                Action = HotKeyAction.PreviousPlaybackDevice,
-                Modifiers = Program.Settings.PrevDeviceModifiers,
-                Key = Program.Settings.PrevDeviceKey
-            };
-            var hkf = new HotKeyForm(hk);
-            hkf.ShowDialog(this);
-            Program.Settings.PrevDeviceKey = hk.Key;
-            Program.Settings.PrevDeviceModifiers = hk.Modifiers;
-            btnPrevDeviceHotKey.Text = hk.Key == Keys.None ? "None" : hk.HotKeyString;
-            RegisterCycleHotKeys();
+                if (dlg.ShowDialog(this) == DialogResult.OK)
+                {
+                    Program.Settings.PrevDeviceKey = dlg.SelectedKey;
+                    Program.Settings.PrevDeviceModifiers = dlg.SelectedModifiers;
+                    btnPrevDeviceHotKey.Text = dlg.SelectedKey == Keys.None ? "None" : new HotKey { Key = dlg.SelectedKey, Modifiers = dlg.SelectedModifiers }.HotKeyString;
+                    RegisterCycleHotKeys();
+                }
+            }
         }
         
         
@@ -839,15 +851,6 @@ namespace FortyOne.AudioSwitcher
 
             if (Program.Settings.ShowDisconnectedDevices)
                 _deviceStateFilter |= DeviceState.Unplugged;
-            
-            // show currently saved cycle hotkeys on the buttons
-            btnNextDeviceHotKey.Text = Program.Settings.NextDeviceKey == Keys.None
-                ? "None"
-                : new HotKey { Key = Program.Settings.NextDeviceKey, Modifiers = Program.Settings.NextDeviceModifiers }.HotKeyString;
-            btnPrevDeviceHotKey.Text = Program.Settings.PrevDeviceKey == Keys.None
-                ? "None"
-                : new HotKey { Key = Program.Settings.PrevDeviceKey, Modifiers = Program.Settings.PrevDeviceModifiers }.HotKeyString;
-
             
             RegisterCycleHotKeys();
         }
