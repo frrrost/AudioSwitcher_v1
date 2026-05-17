@@ -22,6 +22,14 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: nuget restore FortyOne.AudioSwitcher.sln
 
+      - name: Find WindowsInput.dll actual location
+        shell: powershell
+        working-directory: ${{ github.workspace }}
+        run: |
+          Write-Host "=== All files in WindowsInput package ==="
+          Get-ChildItem "packages\WindowsInput.0.2.0.0" -Recurse |
+            ForEach-Object { Write-Host $_.FullName }
+
       - name: Stub .NET 4.0 reference assemblies
         shell: powershell
         run: |
@@ -46,31 +54,26 @@ jobs:
           Get-ChildItem "$v452\*.dll" | ForEach-Object {
             Copy-Item $_.FullName "$v40\$($_.Name)" -Force
           }
+          Write-Host "Done"
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      # Build only the GUI project at diagnostic verbosity so we can see
-      # exactly which HintPaths MSBuild tried and why they failed.
-      # This will produce a large log — we only care about lines mentioning
-      # AudioSwitcher.AudioApi or "not found" / "HintPath".
-      - name: Build GUI project (diagnostic verbosity)
+      - name: Build solution
         working-directory: ${{ github.workspace }}
         run: |
-          msbuild FortyOne.AudioSwitcher\FortyOne.AudioSwitcher.GUI.csproj `
+          msbuild FortyOne.AudioSwitcher.sln `
             /p:Configuration=Release `
             /p:Platform=x86 `
             /p:SignAssembly=false `
             /p:RunPostBuildEvent=Never `
-            /v:diag `
-            2>&1 | Select-String -Pattern "AudioSwitcher\.AudioApi|HintPath|not found|Considered|Resolved|WindowsInput|fastjson" `
-            | ForEach-Object { $_.Line }
-        continue-on-error: true
+            /m `
+            /v:minimal
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: AudioSwitcher-Release-x86
           path: FortyOne.AudioSwitcher/bin/Release/
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 30
