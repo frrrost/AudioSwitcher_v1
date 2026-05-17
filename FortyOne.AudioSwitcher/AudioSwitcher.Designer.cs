@@ -110,6 +110,13 @@
 			this.statusLabelUpdate = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
 			this.statusLabelDonate = new System.Windows.Forms.ToolStripStatusLabel();
+			
+			this.lblNextDeviceHotKey = new System.Windows.Forms.Label();
+			this.lblPrevDeviceHotKey = new System.Windows.Forms.Label();
+			this.btnNextDeviceHotKey = new System.Windows.Forms.Button();
+			this.btnPrevDeviceHotKey = new System.Windows.Forms.Button();	
+			
+			
 			this.playbackStrip.SuspendLayout();
 			this.tabControl1.SuspendLayout();
 			this.tapPlayback.SuspendLayout();
